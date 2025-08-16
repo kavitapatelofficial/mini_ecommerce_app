@@ -1,0 +1,15 @@
+{
+    "title": "Mini E‑Commerce",
+    "retry": "Retry",
+    "add_to_cart": "Add to Cart",
+    "cart": "Cart",
+    "total": "Total",
+    "empty_cart": "Your cart is empty",
+    "language": "Language",
+    "dark_mode": "Dark mode",
+    "products": "Products",
+    "qty": "Qty",
+    "network_error": "Network error. Showing cached data.",
+    "pull_to_refresh": "Pull to refresh",
+    "description": "Description"
+  }
