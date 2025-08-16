@@ -20,21 +20,25 @@ jobs:
       # 2. Setup Flutter
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.3' # use your Flutter version
+          flutter-version: '3.27.3'
 
-      # 3. Get dependencies
+      # 3. Accept Android Licenses
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses
+
+      # 4. Get dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # 4. Run tests (optional)
+      # 5. Run tests (optional)
       - name: Run tests
         run: flutter test
 
-      # 5. Build APK
+      # 6. Build APK
       - name: Build APK
         run: flutter build apk --release
 
-      # 6. Upload APK artifact
+      # 7. Upload APK artifact
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
