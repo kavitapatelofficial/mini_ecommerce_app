@@ -1,27 +1,65 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mini_ecommerce/features/cart/data/repositories/cart_repository_impl.dart';
-import 'package:mini_ecommerce/features/cart/domain/entities/cart_item.dart';
-import 'package:mini_ecommerce/features/product/domain/entities/product.dart';
+import 'dart:convert';
 
-class _FakeLocal { Future<void> save(List<CartItem> _) async {} Future<List<CartItem>> load() async => []; }
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mini_ecommerce/features/cart/data/datasources/cart_local_datasource.dart';
+import 'package:mini_ecommerce/features/cart/domain/entities/cart_item.dart';
+import 'package:mini_ecommerce/features/product/data/models/product_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test('add and update qty works', () {
-    final repo = CartRepositoryImpl(_FakeLocal() as dynamic);
+  late SharedPreferences prefs;
+  late CartLocalDataSource dataSource;
 
-    final p = const Product(id: 1, title: 'A', image: '', description: '', price: 10.0);
-    var list = <CartItem>[];
+  setUp(() async {
+    // Initialize in-memory SharedPreferences
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
+    dataSource = CartLocalDataSource(prefs);
+  });
 
-    list = repo.add(list, p);
-    expect(list.single.quantity, 1);
+  final testProduct = ProductModel(
+    id: 1,
+    title: 'Test Product',
+    image: 'image.png',
+    description: 'A product for testing',
+    price: 99.99,
+  );
 
-    list = repo.add(list, p);
-    expect(list.single.quantity, 2);
+  final testCartItem = CartItem(product: testProduct, quantity: 2);
 
-    list = repo.updateQty(list, p, 5);
-    expect(list.single.quantity, 5);
+  group('CartLocalDataSource', () {
+    test('save stores cart items in SharedPreferences', () async {
+      await dataSource.save([testCartItem]);
 
-    list = repo.updateQty(list, p, 0); // remove
-    expect(list.isEmpty, true);
+      final stored = prefs.getString('cart_items_json_v1');
+      expect(stored, isNotNull);
+
+      final decoded = jsonDecode(stored!) as List;
+      expect(decoded.length, 1);
+      expect(decoded[0]['quantity'], 2);
+      expect(decoded[0]['product']['id'], testProduct.id);
+    });
+
+    test('load retrieves cart items from SharedPreferences', () async {
+      // Save manually to prefs first
+      final jsonList = [
+        {
+          'product': testProduct.toJson(),
+          'quantity': 2,
+        }
+      ];
+      await prefs.setString('cart_items_json_v1', jsonEncode(jsonList));
+
+      final items = await dataSource.load();
+      expect(items.length, 1);
+      expect(items.first.quantity, 2);
+      expect(items.first.product.id, testProduct.id);
+      expect(items.first.product.title, testProduct.title);
+    });
+
+    test('load returns empty list if no data', () async {
+      final items = await dataSource.load();
+      expect(items, isEmpty);
+    });
   });
 }
